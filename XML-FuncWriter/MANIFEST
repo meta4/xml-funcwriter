@@ -1,0 +1,7 @@
+Changes
+Build.pl
+Makefile.PL
+MANIFEST
+README
+t/XML-FuncWriter.t
+lib/XML/FuncWriter.pm
