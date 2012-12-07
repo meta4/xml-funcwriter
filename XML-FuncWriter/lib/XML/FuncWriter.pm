@@ -109,16 +109,26 @@ sub make_func {
     my @contents = @_;
     return bless sub { # Lazy evaluation of XML_elem
 
-      my %cnfg = (%cnfg, ( ref $_[0] eq 'HASH' ) ? %{shift()} : () );
+      # Override config if parameters are passed to stringification function.
+      my %loc_cnfg = (%cnfg, ( ref $_[0] eq 'HASH' ) ? %{shift()} : () );
 
       # create the XML elements
-      my @res = XML_elem( $tag, $cnfg{indent}, @contents );
+      my @res = XML_elem( $tag, $loc_cnfg{indent}, @contents );
 
+      ######################################################################
+      ######################################################################
+      ######################################################################
+      # TODO: This line works & doesn't work.
+      # Uncommented - test passes phone_book fails
+      # Comented - phone_book passes test fails
       # NOT Root Element - Don't concatinate elements.
       return @res if( $_[0] && $_[0] eq 'not root' );
+      ######################################################################
+      ######################################################################
+      ######################################################################
 
       # Concatinate results.
-      return join $cnfg{line_sep}, @res;
+      return join $loc_cnfg{line_sep}, @res;
     }, __PACKAGE__;
   }
 }
