@@ -1,7 +1,9 @@
 Changes
+design_notes.txt
 Build.pl
 Makefile.PL
 MANIFEST
 README
 t/XML-FuncWriter.t
+t/Phone_book_example.t
 lib/XML/FuncWriter.pm

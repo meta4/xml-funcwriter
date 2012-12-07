@@ -5,11 +5,11 @@ use Module::Build;
 my $builder = Module::Build->new(
     module_name       => 'XML::FuncWriter',
     license           => 'perl',
-    dist_author       => 'Peter Wilson <peter.t.wilsn@gmail.net>',
+    dist_author       => 'Peter Wilson <pete.@urawk.org>',
     dist_version_from => 'lib/XML/FuncWriter.pm',
     dist_abstract     => 'A function interface to XML writing',
     license           => 'perl',
-    build_requires => {
+    build_requires    => {
         'Test::More' => 0,
     },
     create_makefile_pl => 'traditional',
