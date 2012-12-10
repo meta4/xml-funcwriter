@@ -24,7 +24,8 @@ is( foo( 'foo_arg' )->( { indent => '', line_sep => '' } ),
     'compact layout'
 );
 
-is( foo( { ID => 1, attr => 1 }, bar( foo(), 'bar contents' ) ),
+is( foo( { ID => 1, attr => 1 },
+         bar( foo(), 'bar contents' ) ),
 '<foo ID="1" attr="1">
   <bar>
     <foo />
@@ -100,7 +101,7 @@ is( $xml2,
     two
   </foo>
 </bar>',
-    'intermediate element storate and first use'
+    'intermediate element storage and first use'
 );
 
 is( $xml3,
@@ -131,16 +132,10 @@ my $qux =
 is( $qux->( 'qux args' ), '<qux>qux args</qux>',
     'compact layout from anonymous function' );
 
-TODO: {
-  local $TODO = "doesn't work yet";
 # use anonymous function with installed functions
 is( foo( $qux->( 'qux contents' ) ),
 '<foo>
-  <qux>
-  qux contents
-  </qux>
+  <qux>qux contents</qux>
 </foo>',
     'mix anonymous and installed; normal layout and compact layout'
 );
-
-}

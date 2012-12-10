@@ -16,7 +16,7 @@ sub import {
   if ( ref $_[0] eq 'ARRAY' ) {
     die "XML::FuncWriter : list of functions or list of configurations"
       unless @_ == 1;  # TODO: think through configuration options
-    # Configure different function sets to do different things
+    # Configure different sets of function to do different things
     foreach my $fset ( @{$_[0]} ) { # for each function set
       die "XML::FuncWriter : list of configurations must be a list of hashes"
         unless ref($fset) eq 'HASH';
@@ -25,7 +25,7 @@ sub import {
       build_and_install_functions($callpkg, \%cnfg, @{$fset->{fncs}});
     }
   } else {
-    # Configure all functions to do the same
+    # Configure all functions the same
     my %cnfg = ( pre => '', post => '',
                  ( ref $_[0] eq 'HASH' ) ? %{shift()} : () );
     build_and_install_functions($callpkg, \%cnfg, @_);
@@ -115,17 +115,11 @@ sub make_func {
       # create the XML elements
       my @res = XML_elem( $tag, $loc_cnfg{indent}, @contents );
 
-      ######################################################################
-      ######################################################################
-      ######################################################################
-      # TODO: This line works & doesn't work.
-      # Uncommented - test passes phone_book fails
-      # Comented - phone_book passes test fails
+      # If there is no line separator join elements into one line
+      @res = (join '', @res) if( $loc_cnfg{line_sep} eq '' );
+
       # NOT Root Element - Don't concatinate elements.
       return @res if( $_[0] && $_[0] eq 'not root' );
-      ######################################################################
-      ######################################################################
-      ######################################################################
 
       # Concatinate results.
       return join $loc_cnfg{line_sep}, @res;

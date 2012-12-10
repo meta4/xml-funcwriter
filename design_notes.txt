@@ -407,8 +407,3 @@ We want to override the stringification operator.  Actually, until we want to pr
 I discovered the need to overload the cmp operator while testing the module
 with Test::more.  (An interesting case of testing uncovering a bug of
 omission.)
-
-<code>
-return 1;
-</code>
-
