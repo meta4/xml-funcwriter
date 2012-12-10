@@ -38,7 +38,7 @@ use XML::FuncWriter(
       },
     },
     {
-      fncs => [ qw( entry ) ],  # defaults config for <entry> tags & elements
+      fncs => [ qw( entry ) ],  # default config for <entry> tags & elements
     },
   ]
 );
@@ -87,26 +87,26 @@ $book->add(
 is( $book->serialize(),
 '<phone_book fmt_ver="0.2">
   <entry>
-  <name>snoopy</name>
-  <number>555-6666</number>
-  <street>15 mocking bird lane</street>
-  <city>somewhere</city>
-  <zip>12345</zip>
-</entry>
+    <name>snoopy</name>
+    <number>555-6666</number>
+    <street>15 mocking bird lane</street>
+    <city>somewhere</city>
+    <zip>12345</zip>
+  </entry>
   <entry>
-  <name>Charle Brown</name>
-  <number>777-8888</number>
-  <street>15 mocking bird lane</street>
-  <city>somewhere</city>
-  <zip>12345</zip>
-</entry>
+    <name>Charle Brown</name>
+    <number>777-8888</number>
+    <street>15 mocking bird lane</street>
+    <city>somewhere</city>
+    <zip>12345</zip>
+  </entry>
   <entry>
-  <name>Lucy VanPelt</name>
-  <number>222-3333</number>
-  <street>32 Shultz Ave</street>
-  <city>somewhere</city>
-  <zip>12345</zip>
-</entry>
+    <name>Lucy VanPelt</name>
+    <number>222-3333</number>
+    <street>32 Shultz Ave</street>
+    <city>somewhere</city>
+    <zip>12345</zip>
+  </entry>
 </phone_book>',
      "Phone Book Example" );
 
