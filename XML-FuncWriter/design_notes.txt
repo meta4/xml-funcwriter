@@ -2,17 +2,17 @@ Easy XML production using Lazy Evaluation, Closures, Currying, and overloaded op
 
 * Introduction
 
-This document is an explanation of a perl package I created to write XML fragments the way CGI.pm writes HTML fragments using nested functions.  The functions in this package take a list of entity contents to enclose between XML open and close tags.  They also take an optional hash reference specifying arbitrary XML attributes.  Some of the entity contents might be nested XML entities, which include their own tags, attributes, contents, sub-entities, etc.  The resulting nesting of XML elements should correspond to nested function calls in the code creating the XML fragment.
+This document explains a perl package I created to write XML fragments the way CGI.pm writes HTML fragments using nested functions.  The functions in this package take a list of entity contents to enclose between XML tags.  They also take an optional hash reference specifying arbitrary XML attributes.  Some of the entity contents might be nested XML entities, which include their own tags, attributes, contents, sub-entities, etc.  The resulting nesting of XML elements should correspond to nested function calls in the code creating the XML fragment.
 
 * Motivation
 
-I wrote this because this package is an interesting exploration of lazy evaluation, closures, and currying function arguments, with a splash of operator overloading for that last little bit of syntactic sugar.  If you do not know what these things are, or you have never seen an demonstration how powerful these things can be, you might find the following interesting.  On the other hand, if you have more experience than I do, you might have suggestions for better ways to accomplish this.
+I wrote this because this as an exploration of lazy evaluation, closures, and currying function arguments, with a splash of operator overloading for that last little bit of syntactic sugar.  If you do not know what these things are, or you have never seen a demonstration of how powerful these things can be, you might find the following interesting.  On the other hand, if you have more experience than I, you might have suggestions for better ways to accomplish the same thing.
 
 * Instructions
 
-The code in this writeup was designed to be run as you read.  If you create a perl file and paste the code into it as you read, the resulting perl program should execute at the end of each example.  The output from the example code is not included in this writeup to motivate you to actually run the examples.  It might be useful to run the code in the debugger to see exactly how things happen, but, due to the recursive nature of the code, this may cause more confusion than understanding.  If you do use the debugger, watching the $tag variable may help you keep track of where you are in the recursion.
+The code in this writeup was designed to be run as you read.  If you create a perl file and paste the code into it as you read, the resulting perl program should execute at the end of each example.  The output from the example code is not included in this writeup to motivate you to run the examples.  It might be useful to run the code in the debugger to see exactly how things happen, but, due to the recursive nature of the code, this may cause more confusion than understanding.  If you do use the debugger, watching the $tag variable may help you keep track of how deep you are in the recursion.
 
-The usual caveats for running someone else's code on your machine apply.  I hope you will  understand the code before you run it.  This works on my machine.  I don't guaranty it works on yours.
+The usual caveats for running someone else's code on your machine apply.  I hope you will  understand the code before you run it.  This works on my machine.  I don't guarantee it works on yours.
 
 Or, you can just read.  I'm not the boss of you.
 
@@ -20,9 +20,7 @@ On to the code!
 
 * Utility Functions
 
-We start with the two standard perl sanity check pragmas, warnings & strict, and two utility functions.  the first function, escape_ents, converts characters not allowed in XML data into their XML representations.  The second function, stringify_attribs, converts a hash into XML attributes to be used in a tag. There are probably more robust ways to accomplish these things but this way works and is simple to understand.
-
-The thing to note in escape_ents is that the characters '<' and '>' are converted to '&lt;' and '&gt;' respectively.
+We start with the two standard perl sanity check pragmas, warnings & strict, and two utility functions.  the first function, escape_ents, converts characters not allowed in XML data into their XML representations.  The second function, stringify_attribs, converts a hash into XML attributes to be used in a tag. There are probably more robust ways to accomplish these things but this way works and is easy to understand.
 
      use warnings;
      use strict;
@@ -46,11 +44,13 @@ The thing to note in escape_ents is that the characters '<' and '>' are converte
 
 * The XML_elem function
 
-This function is where the XML is generated.  It is used for the rest of this discussion so spend a few moments studying what it does.  It's not too complicated.
+This function is where the XML is generated.  It is used for the rest of this discussion so it's worth spending a few moments studying what it does.  It's not too complicated.
 
 The first argument is the name of the XML element.  It is stored in the variable $tag.
 
-If the second argument is a hash reference, then the reference gets stored in $atribs.  Otherwise, $attribs is undefined.
+The second argument is optional.  If it is a hash reference then that reference gets stored in $atribs.  Otherwise, $attribs is undefined.
+
+The remaning arguments are pulled out of @_ as they are processed.
 
 The array @result is where the resulting XML fragments are stored.
 
@@ -58,7 +58,7 @@ The first thing in the @results array is the opening XML tag. If there are attri
 
 If there are no other arguments the opening XML tag is turned into an empty element XML tag, returned, and the function exits.
 
-If there *are* remaining arguments they are processed one by one in the foreach loop.  If an argument is a code ref (used to produce XML-sub-elements) then execute the code, and store the results in @results.  If the argument is a string of plain text escape any illegal characters with escape_ents, and store the result in the @results array.
+If there *are* remaining arguments they are processed one by one in the foreach loop.  If an argument is a code ref (used to produce XML-sub-elements) then it is executed, and the results are stored in @results.  If the argument is a string of plain text escape any illegal characters with escape_ents, and store the result in the @results array.
 
 Finally append the closing XML tag to the @results array and return the results to the caller.  XML_elem leaves it up to the caller to concatenate all the results together.
 
@@ -91,7 +91,7 @@ Pretty simple stuff.
 
 * First Attempt
 
-This example, and all the examples in the first half of this writeup should produce three nested XML elements.  The outermost element should have the tag name "root".  Inside the "root" element is the "branch" element, and inside the "branch" element is the "sub-branch" element.  There are some attributes, text contents, and entities to be converted into their XML representation included to complete the example.
+  This example, and all the examples in the first half of this writeup should produce three nested XML elements.  The outermost XML element should have the tag name "root".  Inside the "root" element is the "branch" element, and inside the "branch" element is the "sub-branch" element.  There are some attributes, text contents, and entities to be converted into their XML representation included to complete the example.
 
 Here is the result I'm trying to produce:
 
@@ -125,7 +125,7 @@ Do you see what went wrong?  Try the code and see what happens. (Or just read on
 
 The source of the problem is complicated.  It has to do with the fundamental way functions are called in perl (and most programming languages).
 
-The problem is Perl evaluates the nested XML_elem functions from the inside out.  The innermost XML_elem function (the 'sub_branch' element) is evaluated first, before the function it is an argument to (the 'branch' element) is called.  When the 'branch' XML_elem function is called all it gets is the @results array from the 'sub_branch' XML_elem function.  The contents of the @results array are all strings.  Some of these strings are XML tags.  So, these XML tags and entities are escaped by escape_ents while they are interpolated into the "branch" element.  Then the @results are escaped again when they are interpolated into the "root" element. The result is a big mess.  It is actually valid XML, but not the XML I wanted.
+The problem is Perl evaluates the nested XML_elem functions from the inside out.  The innermost XML_elem function (the 'sub_branch' element) is evaluated first, before the function it is an argument to (the 'branch' element) is called.  When the 'branch' XML_elem function is called all it gets is the @results array from the 'sub_branch' XML_elem function.  The contents of the @results array are all strings.  Some of these strings are XML tags.  So, these XML tags and entities are escaped by escape_ents as they are interpolated into the "branch" element.  Then the new contents of @results are escaped again when they are interpolated into the "root" element. The result is a big mess.  It is actually valid XML, but not the XML I wanted.
 
 * The Problem
 
@@ -135,13 +135,13 @@ Note: In the first code fragment the list of results from XML_elem are joined to
 
 * Lazy Evaluation
 
-What we need is to prevent the nested XML_elem functions from being evaluated until it's needed inside the calling function.  This is called Lazy Evaluation. Perl can delay the evaluation of a function by passing a code reference as an argument and calling the function through the code reference inside the function, instead of calling the function in the argument list.
+What we need is to prevent the nested XML_elem functions from being evaluated until inside the calling function.  This is called Lazy Evaluation. Perl can delay the evaluation of a function by passing a code reference as an argument and calling the function through the code reference inside the function, instead of calling the function in the argument list.
 
 The problem is, if we use a function reference, how do we pass arguments to the function when it is called via the reference deep inside nested calls to XML_elem?  The solution is to use a closure to bind the subroutine reference and the arguments together into a function that can be called with no arguments.
 
 * The First Closure
 
-This simple subroutine, called "ml" for make lazy, solves our problem.  Each time it is called it packages the subroutine reference in the variable $sub and all the remaining arguments in the array @args, and returns a reference to an anonymous subroutine.  When the anonymous subroutine is called it simply returns the result of calling the subroutine, via the reference stored in $sub, using the arguments stored in @args.  Using this function we  delay the execution of XML_elem until the anonymous function ml returns is executed.
+This simple subroutine, called "ml" for make lazy, solves our problem.  Each time it is called it packages the subroutine reference in the variable $theFunc and all the remaining arguments in the array @args, and returns a reference to an anonymous subroutine.  When the anonymous subroutine is called it simply returns the result of calling the function, via the reference stored in $theFunc, using the arguments stored in @args.  Using this function we  delay the execution of XML_elem until the anonymous function ml returns is executed.
 
 Since $theFunc and @args are lexical variables, declared with "my", a new set is created each time ml is called.  Additionally, as long as we keep a reference to each subroutine that ml returns, each pair of $theFunc and @args variables are kept.  Perl keeps distinct copies of $theFunc and @args together inside each anonymous subroutine so the pointer to the subroutine implicitly contains the proper $theFunc, and @args variables.  This is the magic of closures used to produce lazy evaluation.
 
@@ -174,25 +174,25 @@ This code fragment demonstrates ml in action.  Notice how all the arguments, in 
 
 * Currying Arguments Part 1
 
-This works!!!  It produces the desired output, but the function arguments look cluttered.  Some nesting of function calls is desired because it indicates which XML elements are nested inside each other.  But the amount of nesting in fragment 2 seems clumsy, and excessive.  The clumsiness is most prominent in the inconsistency of the indentation scheme.  Poor code layout, of course, does not necessarily mean poor code, but the fact that there is almost no way to consistently layout the code in a way that indicates the code's purpose is a hint that there might be a better design.
+This works!!!  It produces the desired output, but the function arguments are cluttered.  Some nesting of function calls is desired to indicate which XML elements are nested inside each other.  But the amount of nesting in fragment 2 is clumsy, and excessive.  The clumsiness is most prominent in the inconsistency of the indentation scheme.  Poor code layout, of course, does not necessarily mean poor code, but the fact that there is almost no way to consistently layout the code in a way that indicates the code's purpose is a hint that there might be a better design.
 
-So, lets change how we call ml.  Code fragment 2 crams too many arguments of different kinds into ml.  The first argument is a reference to a subroutine.  The second argument is name of the XML tag.  The remaining arguments are the contents of the XML element including an optional attribute hash and sub-elements.  These are all mashed together in one argument list.  You have to count arguments for each function to determine what is what.  Before I learned there was a better way, this argument cramming seemed normal.
+So, lets change how we call ml.  Code fragment 2 crams too many arguments of different kinds into ml.  The first argument is a reference to a subroutine.  The second argument is name of the XML tag.  The remaining arguments are the contents of the XML element including an optional attribute hash and all the sub-elements.  These are all mashed together in one argument list.  You have to count arguments for each function to determine what is what.  Before I learned there was a better way, this argument mashing seemed normal.
 
-It is possible to break argument lists apart.  To specify the subroutine reference and the XML tag name in one place, and the XML element contents and attributes somewhere else.  This is called currying arguments.
+It is possible to break argument lists apart.  To specify the subroutine reference and the XML tag name in one place, and the XML element contents and attributes somewhere else.  This is called currying arguments (named after the logician Haskell Curry).
 
 To curry the arguments to ml we call one function with a reference to the XML_elem subroutine and the tag name in one place, then, somewhere else supply the remaining XML entity contents.
 
 Currying arguments requires keeping track of which functions have been called with which arguments, and what remaining arguments are needed.  What happens is, when the first arguments are supplied the function returns a reference to an anonymous function that takes the remaining arguments.  In the code fragment below the anonymous function pointers are stored in variables whose names are the names of the XML tags.  This makes it easy to track which arguments go with which functions.
 
-Some languages implement currying automatically.  If you don't supply enough arguments to a function it curries those arguments and returns an anonymous function where you supply the rest of the arguments.  With Perl you have to be a little more explicit.  Fortunately, Perl implements currying using our old friend the closure.  Our closure simply stores the first two arguments to ml in lexical variables, and returns a subroutine which takes the remaining arguments and then calls ml.
+Some languages implement currying automatically.  If you don't supply enough arguments to a function it curries those arguments and returns an anonymous function where you supply the rest of the arguments.  With Perl you have to be a little more explicit.  Fortunately, Perl can implement currying using our old friend the closure.  Our closure simply stores the first two arguments to ml in lexical variables, and returns a subroutine which takes the remaining arguments and then calls ml.
 
     # ca4ml (Curry Arguments for ML)
     sub ca4ml {
-      my $sub = shift;
+      my $theFunc = shift;
       my $tag = shift;
       return sub {
         my @args = @_;
-        return ml( $sub, $tag, @args );
+        return ml( $theFunc, $tag, @args );
       }
     }
 
@@ -213,13 +213,13 @@ Some languages implement currying automatically.  If you don't supply enough arg
 
 * Currying Results
 
-Doesn't this code fragment look much nicer than the previous code fragment.  It is much easier to see which XML attributes and contents go in which entities.  The code which produces the XML mimics the XML layout almost exactly.
+This code fragment looks much nicer than the previous code fragment.  It is easier to see the XML tag, attribute and content nesting.  The code which produces the XML mimics the XML layout almost exactly.
 
 The tricky part is the final anonymous function call indicated by the ")->()" in the last line of the code fragment.  Remember, ml returns an anonymous function.  If we don't execute the outermost anonymous function no XML is produced.  In fact, XML_elem is not called until that anonymous subroutine is executed.  Up to that point all we've done is assemble a hierarchy of anonymous functions and argument lists which contain more anonymous functions. We must execute the outermost anonymous function to actually produce the XML.
 
 One other issue with this implementation can be improved.  Notice that the first argument to ca4ml is always a reference to the subroutine XML_elem.  It always will be.  If we know what an argument will be we don't need to pass it as an argument.
 
-This example shows this change in action.  I changed the name from ca4ml to make_func.  The anonymous functions this function returns are the only interface to this XML writing technique.
+This example shows this change in action.  I changed the name from ca4ml to make_func.  The anonymous functions this make_func returns are the only interface to this XML writing technique.
 
     sub make_func {
       my $tag = shift;
@@ -246,7 +246,7 @@ This example shows this change in action.  I changed the name from ca4ml to make
 
 * The Story So Far ...
 
-In the introduction I said I was looking for a package which wrote XML using this nested function paradigm.  What we have so far is not a package but it can easily be turned into a package with a rather novel interface.  The title mentions overloaded operators; Notice, I haven't overloaded any operators yet.  You need to have a package to overload operators.
+In the introduction I said I was looking for a package which wrote XML using this nested function paradigm.  What we have so far is not a package but it can easily be turned into a package with a rather novel interface.  The title mentions overloaded operators; I haven't overloaded any operators yet.  You need to have a package to overload operators.
 
 * Starting Over
 
@@ -279,7 +279,7 @@ The second improvement is the addition of what is called the distributive proper
 
 This library lets you do the same thing with any XML tag you want.
 
-There are other changes and refactoring that I will describe below.  The first is, of course, the addition of the package declaration.
+There are other changes and some refactoring which I will describe below.  The first is, of course, the addition of the package declaration.
 
     package XML::FuncWriter;
 
@@ -359,7 +359,7 @@ The code in XML_elem that implements the recursion is mixed in with the code tha
       return $indent . escape_ents( $arg )
     }
 
-I moved the funtionality of the ml (make lazy) function from the parent node into make_func since that was the only place it was called.  This makes make_func a bit more complicated, but it consolidates all the wizard stuff in one function (except the operator overloading stuff, which we'll get to in a minute). 
+I moved the funtionality of the ml (make lazy) function into make_func since that was the only place it was called.  This makes make_func a bit more complicated, but it consolidates all the wizard stuff in one function (except the operator overloading stuff, which we'll get to in a minute). 
 
 Since the library also handles concatenating the results of XML_elem into one string when desired it should also allow the user to specify how they would like the whitespace handled in the resulting XML.  This is handled by allowing the user to specify two named arguments in an anonymous hash to the final anonymous function to produce the XML string.  The argument specified by indent is prepended to each line once for each level of element nesting. Unless the user is doing something weird it should just be a string of white space.  The default is two spaces.  The argument specified by line_sep is used to join all the XML elements together.
 
@@ -404,6 +404,4 @@ We want to override the stringification operator.  Actually, until we want to pr
       '""'  => sub { $_[0]->() },
       'cmp' => sub { return $_[2] ? $_[1] cmp $_[0]->() : $_[0]->() cmp $_[1] };
 
-I discovered the need to overload the cmp operator while testing the module
-with Test::more.  (An interesting case of testing uncovering a bug of
-omission.)
+I discovered the need to overload the cmp operator while testing the module with Test::more.  (An interesting case of testing uncovering a bug of omission.)
