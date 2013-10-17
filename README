@@ -1,11 +1,16 @@
 XML-FuncWriter version 0.01
 ===========================
 
-Easy XML Writing.
+The README is used to introduce the module and provide instructions on
+how to install the module, any machine dependencies it may have (for
+example C compilers and installed libraries) and any other information
+that should be provided before the module is installed.
 
-This module is still a work in progress.
-
-Documentation is in the works.  See the tests for usage.  See design_notes.txt for the, well, design.
+A README file is required for CPAN modules since CPAN extracts the
+README file from a module distribution so that people browsing the
+archive can use it get an idea of the modules uses. It is usually a
+good idea to provide version information here so that people can
+decide whether fixes for the module are worth downloading.
 
 INSTALLATION
 
@@ -18,13 +23,15 @@ To install this module type the following:
 
 DEPENDENCIES
 
-This module requires no other libraries:
+This module requires these other modules and libraries:
+
+  blah blah blah
 
 COPYRIGHT AND LICENCE
 
 Put the correct copyright and licence information here.
 
-Copyright (C) 2012 by Pete Wilson
+Copyright (C) 2012 by A. U. Thor
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.4 or,
